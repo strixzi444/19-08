@@ -2,20 +2,22 @@
 Módulo 3 — Cálculo Aplicado / Gradiente
 App interactiva de Descenso de Gradiente
 
-Función objetivo:
-    f(x, y) = (x - 3)^2 + (y + 2)^2
+Ejercicio:
+Cambiar la función objetivo original:
 
-Gradiente:
+    f(x, y) = x² + y²
+
+por:
+
+    f(x, y) = (x - 3)² + (y + 2)²
+
+Su mínimo global se encuentra en:
+
+    (x, y) = (3, -2)
+
+Y su gradiente es:
+
     ∇f(x, y) = [2(x - 3), 2(y + 2)]
-
-Mínimo global:
-    (3, -2)
-
-Ejecutar con:
-    streamlit run app_gradiente.py
-
-Dependencias:
-    pip install streamlit numpy matplotlib
 """
 
 import numpy as np
@@ -39,28 +41,31 @@ st.title("🎯 Descenso de Gradiente Interactivo")
 
 st.markdown(
     """
-    Explora en vivo cómo la **tasa de aprendizaje ($\\eta$)** y el **punto inicial**
-    afectan la convergencia del descenso de gradiente.
+Explora en vivo cómo la **tasa de aprendizaje ($\\eta$)** y el **punto inicial**
+afectan la convergencia del descenso de gradiente.
 
-    ### Función objetivo utilizada
+### Función objetivo utilizada
 
-    $$
-    f(x,y) = (x-3)^2 + (y+2)^2
-    $$
+$$
+f(x,y) = (x-3)^2 + (y+2)^2
+$$
 
-    ### Gradiente
+El mínimo global se encuentra en:
 
-    $$
-    \\nabla f(x,y) =
-    \\left(2(x-3),\\;2(y+2)\\right)
-    $$
+$$
+(3,-2)
+$$
 
-    El **mínimo global** se encuentra en:
+Y su gradiente es:
 
-    $$
-    (x,y) = (3,-2)
-    $$
-    """
+$$
+\\nabla f(x,y) =
+\\begin{bmatrix}
+2(x-3) \\\\
+2(y+2)
+\\end{bmatrix}
+$$
+"""
 )
 
 
@@ -71,10 +76,9 @@ st.markdown(
 def f2(x, y):
     """
     Función objetivo:
-
     f(x,y) = (x-3)^2 + (y+2)^2
 
-    Tiene un único mínimo global en (3,-2).
+    Tiene un único mínimo global en (3, -2).
     """
     return (x - 3) ** 2 + (y + 2) ** 2
 
@@ -90,6 +94,10 @@ def gradiente_f2(x, y):
         2 * (y + 2)
     ])
 
+
+# =========================================================
+# Descenso de gradiente
+# =========================================================
 
 def descenso_gradiente(
     grad_func,
@@ -134,17 +142,11 @@ def clasificar_convergencia(historial):
     converge, oscila o diverge.
     """
 
-    # Distancia al mínimo global (3,-2)
-    minimo = np.array([3.0, -2.0])
-
-    distancias = np.linalg.norm(
-        historial - minimo,
-        axis=1
-    )
+    normas = np.linalg.norm(historial, axis=1)
 
     if (
-        not np.all(np.isfinite(distancias))
-        or distancias[-1] > distancias[0] * 1.5
+        not np.all(np.isfinite(normas))
+        or normas[-1] > normas[0] * 1.5
     ):
         return "diverge", "🔴"
 
@@ -166,7 +168,7 @@ def clasificar_convergencia(historial):
 # Crear superficie de la función
 # =========================================================
 
-_grid = np.linspace(-4, 7, 70)
+_grid = np.linspace(-4, 7, 60)
 
 _X, _Y = np.meshgrid(
     _grid,
@@ -187,7 +189,8 @@ def figura_3d(
     azim=-50
 ):
     """
-    Superficie 3D + trayectoria del descenso de gradiente.
+    Superficie 3D + trayectoria del descenso
+    de gradiente.
     """
 
     zs_hist = f2(
@@ -202,7 +205,7 @@ def figura_3d(
         projection="3d"
     )
 
-    # Superficie de la función
+    # Superficie
     ax.plot_surface(
         _X,
         _Y,
@@ -246,15 +249,15 @@ def figura_3d(
         zorder=10
     )
 
-    # NUEVO MÍNIMO GLOBAL: (3,-2)
+    # Mínimo global: (3, -2)
     ax.scatter(
         [3],
         [-2],
         [f2(3, -2)],
         color="gold",
         edgecolor="black",
-        s=100,
-        label="Mínimo global (3,-2)",
+        s=80,
+        label="Mínimo global",
         zorder=10
     )
 
@@ -404,11 +407,11 @@ col_m2.metric(
     f"{f2(x0, y0):.3f}"
 )
 
-valor_final = f2(
-    *historial[-1]
-) if np.all(
-    np.isfinite(historial[-1])
-) else float("nan")
+valor_final = (
+    f2(*historial[-1])
+    if np.all(np.isfinite(historial[-1]))
+    else float("nan")
+)
 
 col_m3.metric(
     "f(final)",
@@ -423,12 +426,12 @@ col_m4.metric(
 )
 
 
+# =========================================================
+# Gráficas
+# =========================================================
+
 st.markdown("---")
 
-
-# =========================================================
-# Vista normal
-# =========================================================
 
 if not modo_comparacion:
 
@@ -457,9 +460,7 @@ if not modo_comparacion:
                 """
                 Con esta tasa de aprendizaje el algoritmo
                 **diverge**: cada paso se aleja más del mínimo
-                en vez de acercarse.
-
-                Prueba bajar η.
+                en vez de acercarse. Prueba bajar η.
                 """
             )
 
@@ -469,7 +470,6 @@ if not modo_comparacion:
                 """
                 El algoritmo **oscila** alrededor del mínimo:
                 converge, pero de forma inestable.
-
                 Bajar un poco η suele suavizar la trayectoria.
                 """
             )
@@ -485,7 +485,7 @@ if not modo_comparacion:
 
 
 # =========================================================
-# Comparación de tasas
+# Comparación de tasas de aprendizaje
 # =========================================================
 
 else:
@@ -566,14 +566,14 @@ else:
             zorder=10
         )
 
-        # NUEVO MÍNIMO GLOBAL
+        # Mínimo global (3,-2)
         ax.scatter(
             [3],
             [-2],
             [f2(3, -2)],
             color="gold",
             edgecolor="black",
-            s=70,
+            s=50,
             zorder=10
         )
 
@@ -604,15 +604,19 @@ else:
 
     st.info(
         """
-        Con el mismo punto inicial, notarás cómo las
-        diferentes tasas de aprendizaje afectan la trayectoria
-        hacia el nuevo mínimo global **(3,-2)**.
+        Con el mismo punto inicial, notarás cómo las diferentes
+        tasas de aprendizaje afectan la velocidad y estabilidad
+        de la convergencia hacia el mínimo global **(3, -2)**.
+       
+        Una tasa muy pequeña avanza lentamente, mientras que una
+        tasa demasiado grande puede provocar oscilaciones o
+        divergencia.
         """
     )
 
 
 # =========================================================
-# Caso aplicado: regresión
+# Caso aplicado: consumo energético
 # =========================================================
 
 st.markdown("---")
@@ -629,8 +633,8 @@ with st.expander(
         \\hat{y} = w \\cdot x + b
         $$
 
-        que predice el **consumo energético (kWh)** de una
-        planta a partir de la **temperatura ambiente (°C)**,
+        que predice el **consumo energético (kWh)**
+        de una planta a partir de la **temperatura ambiente (°C)**,
         minimizando el Error Cuadrático Medio (MSE).
         """
     )
@@ -652,6 +656,11 @@ with st.expander(
         20,
         key="iter_reg"
     )
+
+
+    # =====================================================
+    # Generación de datos
+    # =====================================================
 
     @st.cache_data
     def generar_datos_energia(
@@ -682,8 +691,7 @@ with st.expander(
         )
 
         temp_norm = (
-            temperatura
-            - temperatura.mean()
+            temperatura - temperatura.mean()
         ) / temperatura.std()
 
         return (
@@ -692,19 +700,36 @@ with st.expander(
             temp_norm
         )
 
+
     temperatura, consumo_real, temp_norm = (
         generar_datos_energia()
     )
 
 
-    def mse(w, b, x, y):
+    # =====================================================
+    # MSE
+    # =====================================================
 
-        y_pred = w * x + b
+    def mse(
+        w,
+        b,
+        x,
+        y
+    ):
+
+        y_pred = (
+            w * x
+            + b
+        )
 
         return np.mean(
             (y - y_pred) ** 2
         )
 
+
+    # =====================================================
+    # Gradiente del MSE
+    # =====================================================
 
     def gradiente_mse(
         w,
@@ -715,13 +740,20 @@ with st.expander(
 
         n = len(x)
 
-        y_pred = w * x + b
+        y_pred = (
+            w * x
+            + b
+        )
 
-        dw = -(2 / n) * np.sum(
+        dw = -(
+            2 / n
+        ) * np.sum(
             x * (y - y_pred)
         )
 
-        db = -(2 / n) * np.sum(
+        db = -(
+            2 / n
+        ) * np.sum(
             y - y_pred
         )
 
@@ -730,6 +762,10 @@ with st.expander(
             db
         ])
 
+
+    # =====================================================
+    # Entrenamiento
+    # =====================================================
 
     w, b = 0.0, 0.0
 
@@ -758,12 +794,12 @@ with st.expander(
         )
 
 
+    # =====================================================
+    # Gráficas del modelo
+    # =====================================================
+
     col_a, col_b = st.columns(2)
 
-
-    # =====================================================
-    # Gráfica del costo
-    # =====================================================
 
     with col_a:
 
@@ -800,10 +836,6 @@ with st.expander(
             fig_costo
         )
 
-
-    # =====================================================
-    # Gráfica del modelo
-    # =====================================================
 
     with col_b:
 
@@ -870,6 +902,10 @@ with st.expander(
             fig_ajuste
         )
 
+
+    # =====================================================
+    # Resultado del entrenamiento
+    # =====================================================
 
     if np.isfinite(costos[-1]):
 
